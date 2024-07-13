@@ -6,7 +6,6 @@ import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import List from "@mui/material/List";
 import CssBaseline from "@mui/material/CssBaseline";
-import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -17,7 +16,7 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
-import MailIcon from "@mui/icons-material/Mail";
+import { useNavigate } from "react-router-dom"; 
 
 const drawerWidth = 240;
 
@@ -47,7 +46,6 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   alignItems: "center",
   justifyContent: "flex-end",
   padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
   ...theme.mixins.toolbar,
 }));
 
@@ -93,6 +91,7 @@ const Drawer = styled(MuiDrawer, {
 export default function CustomDrawer() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+  const navigate = useNavigate(); 
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -100,6 +99,10 @@ export default function CustomDrawer() {
 
   const handleDrawerClose = () => {
     setOpen(false);
+  };
+
+  const handlePhonebookClick = () => {
+    navigate("/phonebook"); 
   };
 
   return (
@@ -119,7 +122,6 @@ export default function CustomDrawer() {
           >
             <MenuIcon />
           </IconButton>
-          
         </Toolbar>
       </AppBar>
       <Drawer variant="permanent" open={open}>
@@ -132,11 +134,33 @@ export default function CustomDrawer() {
             )}
           </IconButton>
         </DrawerHeader>
-  
-       
-        
+        <Divider />
+        <List>
+          {["Phonebook"].map((text) => (
+            <ListItem key={text} disablePadding sx={{ display: "block" }}>
+              <ListItemButton
+                onClick={handlePhonebookClick} 
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                  }}
+                >
+                  <InboxIcon />
+                </ListItemIcon>
+                <ListItemText primary={text} sx={{ opacity: open ? 1 : 0 }} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
       </Drawer>
-
     </Box>
   );
 }
