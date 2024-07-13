@@ -1,14 +1,20 @@
-import Homepage from "./pages/HomePage";
-function App() {
 
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Layout from "./components/Layout";
+import Homepage from "./pages/HomePage";
+import Phonebook from "./components/Phonebook";
+
+function App() {
   return (
-    <>
-      <div>
-        <Homepage/>
-      </div>
-     
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Homepage />} />
+          <Route path="phonebook" element={<Phonebook />} />
+        </Route>
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
