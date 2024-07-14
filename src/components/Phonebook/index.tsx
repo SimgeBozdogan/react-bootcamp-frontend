@@ -1,6 +1,13 @@
 import * as React from "react";
 import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
 import { Formik, Field, Form } from "formik";
 import * as Yup from "yup";
 
@@ -71,7 +78,7 @@ const Phonebook: React.FC = () => {
     } else {
       const newEntry = {
         id: rows.length + 1,
-        ...values
+        ...values,
       };
       const updatedRows = [...rows, newEntry];
       localStorage.setItem("phonebook", JSON.stringify(updatedRows));
@@ -89,25 +96,38 @@ const Phonebook: React.FC = () => {
       field: "actions",
       headerName: "Actions",
       type: "actions",
-      width: 150,
+      width: 250,
       getActions: (params) => [
         <GridActionsCellItem
-          icon={<Button variant="contained" color="primary">Update</Button>}
+          icon={
+            <Button variant="contained" color="primary">
+              Update
+            </Button>
+          }
           label="Update"
           onClick={() => handleEditClick(params.row)}
         />,
         <GridActionsCellItem
-          icon={<Button variant="contained" color="secondary">Delete</Button>}
+          icon={
+            <Button variant="contained" color="secondary">
+              Delete
+            </Button>
+          }
           label="Delete"
           onClick={() => handleDeleteClick(params.row)}
-        />
-      ]
-    }
+        />,
+      ],
+    },
   ];
 
   return (
     <div style={{ height: 400, width: "100%" }}>
-      <Button variant="contained" color="primary" onClick={() => setOpen(true)}>
+      <Button
+        style={{ marginBottom: "2rem" }}
+        variant="contained"
+        color="primary"
+        onClick={() => setOpen(true)}
+      >
         New
       </Button>
       <DataGrid rows={rows} columns={columns} pageSizeOptions={[5]} />
@@ -118,12 +138,14 @@ const Phonebook: React.FC = () => {
             initialValues={{
               name: editRow ? editRow.name : "",
               surname: editRow ? editRow.surname : "",
-              phoneNumber: editRow ? editRow.phoneNumber : ""
+              phoneNumber: editRow ? editRow.phoneNumber : "",
             }}
             validationSchema={Yup.object({
               name: Yup.string().required("Required"),
               surname: Yup.string().required("Required"),
-              phoneNumber: Yup.string().required("Required").matches(/^\d{10}$/, "Phone number is not valid"),
+              phoneNumber: Yup.string()
+                .required("Required")
+                .matches(/^\d{10}$/, "Phone number is not valid"),
             })}
             onSubmit={(values, { setSubmitting }) => {
               handleNewEntry(values);
@@ -132,11 +154,37 @@ const Phonebook: React.FC = () => {
           >
             {({ isSubmitting, errors, touched }) => (
               <Form>
-                <Field as={TextField} name="name" label="Name" fullWidth margin="normal" error={touched.name && !!errors.name} helperText={touched.name && errors.name} />
-                <Field as={TextField} name="surname" label="Surname" fullWidth margin="normal" error={touched.surname && !!errors.surname} helperText={touched.surname && errors.surname} />
-                <Field as={TextField} name="phoneNumber" label="Phone Number" fullWidth margin="normal" error={touched.phoneNumber && !!errors.phoneNumber} helperText={touched.phoneNumber && errors.phoneNumber} />
+                <Field
+                  as={TextField}
+                  name="name"
+                  label="Name"
+                  fullWidth
+                  margin="normal"
+                  error={touched.name && !!errors.name}
+                  helperText={touched.name && errors.name}
+                />
+                <Field
+                  as={TextField}
+                  name="surname"
+                  label="Surname"
+                  fullWidth
+                  margin="normal"
+                  error={touched.surname && !!errors.surname}
+                  helperText={touched.surname && errors.surname}
+                />
+                <Field
+                  as={TextField}
+                  name="phoneNumber"
+                  label="Phone Number"
+                  fullWidth
+                  margin="normal"
+                  error={touched.phoneNumber && !!errors.phoneNumber}
+                  helperText={touched.phoneNumber && errors.phoneNumber}
+                />
                 <DialogActions>
-                  <Button onClick={() => setOpen(false)} color="primary">Cancel</Button>
+                  <Button onClick={() => setOpen(false)} color="primary">
+                    Cancel
+                  </Button>
                   <Button type="submit" color="primary" disabled={isSubmitting}>
                     {editRow ? "Update" : "Add"}
                   </Button>
@@ -146,12 +194,21 @@ const Phonebook: React.FC = () => {
           </Formik>
         </DialogContent>
       </Dialog>
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>Are you sure you want to delete this entry?</DialogContent>
+        <DialogContent>
+          Are you sure you want to delete this entry?
+        </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="secondary">OK</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="secondary">
+            OK
+          </Button>
         </DialogActions>
       </Dialog>
     </div>
