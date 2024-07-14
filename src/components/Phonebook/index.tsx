@@ -31,6 +31,8 @@ const Phonebook: React.FC = () => {
   const [rows, setRows] = React.useState<any[]>([]);
   const [open, setOpen] = React.useState(false);
   const [editRow, setEditRow] = React.useState<any>(null);
+  const [deleteRow, setDeleteRow] = React.useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     let storedData = localStorage.getItem("phonebook");
@@ -44,6 +46,19 @@ const Phonebook: React.FC = () => {
   const handleEditClick = (row: any) => {
     setEditRow(row);
     setOpen(true);
+  };
+
+  const handleDeleteClick = (row: any) => {
+    setDeleteRow(row);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    const updatedRows = rows.filter((row) => row.id !== deleteRow.id);
+    localStorage.setItem("phonebook", JSON.stringify(updatedRows));
+    setRows(updatedRows);
+    setDeleteDialogOpen(false);
+    setDeleteRow(null);
   };
 
   const handleNewEntry = (values: any) => {
@@ -80,6 +95,11 @@ const Phonebook: React.FC = () => {
           icon={<Button variant="contained" color="primary">Update</Button>}
           label="Update"
           onClick={() => handleEditClick(params.row)}
+        />,
+        <GridActionsCellItem
+          icon={<Button variant="contained" color="secondary">Delete</Button>}
+          label="Delete"
+          onClick={() => handleDeleteClick(params.row)}
         />
       ]
     }
@@ -125,6 +145,14 @@ const Phonebook: React.FC = () => {
             )}
           </Formik>
         </DialogContent>
+      </Dialog>
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>Are you sure you want to delete this entry?</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="secondary">OK</Button>
+        </DialogActions>
       </Dialog>
     </div>
   );
