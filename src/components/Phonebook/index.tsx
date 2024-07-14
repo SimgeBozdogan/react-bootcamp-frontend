@@ -1,14 +1,8 @@
 import * as React from "react";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { Formik, Field, Form } from "formik";
 import * as Yup from "yup";
-
-const columns: GridColDef[] = [
-  { field: "name", headerName: "Name", width: 150 },
-  { field: "surname", headerName: "Surname", width: 150 },
-  { field: "phoneNumber", headerName: "Phone Number", width: 200 },
-];
 
 const initialData = [
   { id: 1, name: "John", surname: "Doe", phoneNumber: "1234567890" },
@@ -36,6 +30,7 @@ const initialData = [
 const Phonebook: React.FC = () => {
   const [rows, setRows] = React.useState<any[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [editRow, setEditRow] = React.useState<any>(null);
 
   React.useEffect(() => {
     let storedData = localStorage.getItem("phonebook");
@@ -46,16 +41,49 @@ const Phonebook: React.FC = () => {
     setRows(JSON.parse(storedData));
   }, []);
 
-  const handleNewEntry = (values: any) => {
-    const newEntry = {
-      id: rows.length + 1,
-      ...values
-    };
-    const updatedRows = [...rows, newEntry];
-    localStorage.setItem("phonebook", JSON.stringify(updatedRows));
-    setRows(updatedRows);
-    setOpen(false);
+  const handleEditClick = (row: any) => {
+    setEditRow(row);
+    setOpen(true);
   };
+
+  const handleNewEntry = (values: any) => {
+    if (editRow) {
+      const updatedRows = rows.map((row) =>
+        row.id === editRow.id ? { ...row, ...values } : row
+      );
+      localStorage.setItem("phonebook", JSON.stringify(updatedRows));
+      setRows(updatedRows);
+    } else {
+      const newEntry = {
+        id: rows.length + 1,
+        ...values
+      };
+      const updatedRows = [...rows, newEntry];
+      localStorage.setItem("phonebook", JSON.stringify(updatedRows));
+      setRows(updatedRows);
+    }
+    setOpen(false);
+    setEditRow(null);
+  };
+
+  const columns: GridColDef[] = [
+    { field: "name", headerName: "Name", width: 150 },
+    { field: "surname", headerName: "Surname", width: 150 },
+    { field: "phoneNumber", headerName: "Phone Number", width: 200 },
+    {
+      field: "actions",
+      headerName: "Actions",
+      type: "actions",
+      width: 150,
+      getActions: (params) => [
+        <GridActionsCellItem
+          icon={<Button variant="contained" color="primary">Update</Button>}
+          label="Update"
+          onClick={() => handleEditClick(params.row)}
+        />
+      ]
+    }
+  ];
 
   return (
     <div style={{ height: 400, width: "100%" }}>
@@ -64,10 +92,14 @@ const Phonebook: React.FC = () => {
       </Button>
       <DataGrid rows={rows} columns={columns} pageSizeOptions={[5]} />
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>New Entry</DialogTitle>
+        <DialogTitle>{editRow ? "Update Entry" : "New Entry"}</DialogTitle>
         <DialogContent>
           <Formik
-            initialValues={{ name: "", surname: "", phoneNumber: "" }}
+            initialValues={{
+              name: editRow ? editRow.name : "",
+              surname: editRow ? editRow.surname : "",
+              phoneNumber: editRow ? editRow.phoneNumber : ""
+            }}
             validationSchema={Yup.object({
               name: Yup.string().required("Required"),
               surname: Yup.string().required("Required"),
@@ -85,7 +117,9 @@ const Phonebook: React.FC = () => {
                 <Field as={TextField} name="phoneNumber" label="Phone Number" fullWidth margin="normal" error={touched.phoneNumber && !!errors.phoneNumber} helperText={touched.phoneNumber && errors.phoneNumber} />
                 <DialogActions>
                   <Button onClick={() => setOpen(false)} color="primary">Cancel</Button>
-                  <Button type="submit" color="primary" disabled={isSubmitting}>Add</Button>
+                  <Button type="submit" color="primary" disabled={isSubmitting}>
+                    {editRow ? "Update" : "Add"}
+                  </Button>
                 </DialogActions>
               </Form>
             )}
