@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DataGrid, GridColDef, GridActionsCellItem } from "@mui/x-data-grid";
 import {
   Button,
@@ -10,82 +10,109 @@ import {
 } from "@mui/material";
 import { Formik, Field, Form } from "formik";
 import * as Yup from "yup";
+import {
+  getAllPhonebook,
+  createPhonebookEntry,
+  updatePhonebookEntry,
+  deletePhonebookEntry,
+} from "../../service/Phonebook";
+import { Phonebook } from "../../types/phonebook";
+import { generateRandomUid } from "../../utils";
+import { toast } from "react-toastify";
 
-const initialData = [
-  { id: 1, name: "John", surname: "Doe", phoneNumber: "1234567890" },
-  { id: 2, name: "Jane", surname: "Smith", phoneNumber: "0987654321" },
-  { id: 3, name: "Alice", surname: "Johnson", phoneNumber: "2345678901" },
-  { id: 4, name: "Bob", surname: "Williams", phoneNumber: "3456789012" },
-  { id: 5, name: "Charlie", surname: "Brown", phoneNumber: "4567890123" },
-  { id: 6, name: "David", surname: "Jones", phoneNumber: "5678901234" },
-  { id: 7, name: "Ella", surname: "Garcia", phoneNumber: "6789012345" },
-  { id: 8, name: "Fiona", surname: "Martinez", phoneNumber: "7890123456" },
-  { id: 9, name: "George", surname: "Rodriguez", phoneNumber: "8901234567" },
-  { id: 10, name: "Hannah", surname: "Lee", phoneNumber: "9012345678" },
-  { id: 11, name: "Ian", surname: "Walker", phoneNumber: "1123456789" },
-  { id: 12, name: "Jack", surname: "Hall", phoneNumber: "2234567890" },
-  { id: 13, name: "Karen", surname: "Allen", phoneNumber: "3345678901" },
-  { id: 14, name: "Liam", surname: "Young", phoneNumber: "4456789012" },
-  { id: 15, name: "Mia", surname: "King", phoneNumber: "5567890123" },
-  { id: 16, name: "Nathan", surname: "Wright", phoneNumber: "6678901234" },
-  { id: 17, name: "Olivia", surname: "Scott", phoneNumber: "7789012345" },
-  { id: 18, name: "Peter", surname: "Green", phoneNumber: "8890123456" },
-  { id: 19, name: "Quinn", surname: "Adams", phoneNumber: "9901234567" },
-  { id: 20, name: "Rachel", surname: "Baker", phoneNumber: "1012345678" },
-];
+const PhonebookComponent: React.FC = () => {
+  const [rows, setRows] = useState<Phonebook[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editRow, setEditRow] = useState<Phonebook | null>(null);
+  const [deleteRow, setDeleteRow] = useState<Phonebook | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-const Phonebook: React.FC = () => {
-  const [rows, setRows] = React.useState<any[]>([]);
-  const [open, setOpen] = React.useState(false);
-  const [editRow, setEditRow] = React.useState<any>(null);
-  const [deleteRow, setDeleteRow] = React.useState<any>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    let storedData = localStorage.getItem("phonebook");
-    if (!storedData) {
-      localStorage.setItem("phonebook", JSON.stringify(initialData));
-      storedData = JSON.stringify(initialData);
+  const fetchPhonebookData = useCallback(async () => {
+    try {
+      const response = await getAllPhonebook();
+      if (response.status === 200) {
+        setRows(response.data);
+        toast.success("Data succesfully fetched.");
+        return;
+      }
+      toast.error("Error fetching data.");
+    } catch (error: any) {
+      console.error(error);
     }
-    setRows(JSON.parse(storedData));
   }, []);
 
-  const handleEditClick = (row: any) => {
+  useEffect(() => {
+    fetchPhonebookData();
+  }, [fetchPhonebookData]);
+
+  const handleEditClick = (row: Phonebook) => {
     setEditRow(row);
     setOpen(true);
   };
 
-  const handleDeleteClick = (row: any) => {
+  const handleDeleteClick = (row: Phonebook) => {
     setDeleteRow(row);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    const updatedRows = rows.filter((row) => row.id !== deleteRow.id);
-    localStorage.setItem("phonebook", JSON.stringify(updatedRows));
-    setRows(updatedRows);
-    setDeleteDialogOpen(false);
-    setDeleteRow(null);
+  const handleDeleteConfirm = async () => {
+    if (!deleteRow) return;
+    try {
+      const response = await deletePhonebookEntry(deleteRow.id);
+      if (response.status === 200) {
+        const updatedRows = rows.filter((row) => row.id !== deleteRow.id);
+        setRows(updatedRows);
+        toast.success("Data succesfully deleted.");
+        return;
+      }
+      toast.error("Error deleting data");
+    } catch (error: any) {
+      console.error(error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteRow(null);
+    }
   };
 
-  const handleNewEntry = (values: any) => {
+  const handleNewEntry = async (values: any) => {
     if (editRow) {
-      const updatedRows = rows.map((row) =>
-        row.id === editRow.id ? { ...row, ...values } : row
-      );
-      localStorage.setItem("phonebook", JSON.stringify(updatedRows));
-      setRows(updatedRows);
+      try {
+        const response = await updatePhonebookEntry(editRow.id, values);
+        if (response.status === 200) {
+          const updatedRows = rows.map((row) =>
+            row.id === editRow.id ? { ...row, ...values } : row
+          );
+          setRows(updatedRows);
+          toast.success("Data succesfully updated.");
+          return;
+        }
+        toast.error("Error updating data.");
+      } catch (error: any) {
+        console.error(error);
+      } finally {
+        setOpen(false);
+        setEditRow(null);
+      }
     } else {
-      const newEntry = {
-        id: rows.length + 1,
-        ...values,
-      };
-      const updatedRows = [...rows, newEntry];
-      localStorage.setItem("phonebook", JSON.stringify(updatedRows));
-      setRows(updatedRows);
+      const id = generateRandomUid();
+      const newEntry = { ...values, id };
+
+      try {
+        const response = await createPhonebookEntry(newEntry);
+        if (response.status === 201) {
+          const updatedRows = [...rows, newEntry];
+          setRows(updatedRows);
+          toast.success("Data succesfully created.");
+          return;
+        }
+        toast.error("Error creating data.");
+      } catch (error: any) {
+        console.error(error);
+      } finally {
+        setOpen(false);
+        setEditRow(null);
+      }
     }
-    setOpen(false);
-    setEditRow(null);
   };
 
   const columns: GridColDef[] = [
@@ -105,7 +132,7 @@ const Phonebook: React.FC = () => {
             </Button>
           }
           label="Update"
-          onClick={() => handleEditClick(params.row)}
+          onClick={() => handleEditClick(params.row as Phonebook)}
         />,
         <GridActionsCellItem
           icon={
@@ -114,7 +141,7 @@ const Phonebook: React.FC = () => {
             </Button>
           }
           label="Delete"
-          onClick={() => handleDeleteClick(params.row)}
+          onClick={() => handleDeleteClick(params.row as Phonebook)}
         />,
       ],
     },
@@ -215,4 +242,4 @@ const Phonebook: React.FC = () => {
   );
 };
 
-export default Phonebook;
+export default PhonebookComponent;
